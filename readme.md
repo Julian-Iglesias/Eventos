@@ -25,6 +25,7 @@ npm install
 ```
 
 
+
 ## Registro de usuarios
 
 ### POST /api/sessions/register
@@ -43,6 +44,7 @@ Campos esperados:
 ```
 
 
+
 ## Variables de entorno
 Crear un archivo .env en la raíz del proyecto tomando como referencia el archivo .env.example.
 
@@ -57,6 +59,7 @@ El archivo .env contiene información privada y no debe subirse al
 repositorio.
 
 
+
 ## Ejecutar el proyecto
 Para ejecutar el proyecto en modo desarrollo:
 ```bash
@@ -68,6 +71,7 @@ npm start
 ```
 Por defecto, el servidor se ejecuta en:
 http://localhost:8080
+
 
 
 ## Estructura de carpetas
@@ -96,12 +100,13 @@ src/
     └── hash.js
 
 
+
 ## Rutas disponibles
 
 ### GET /api/health
 Permite verificar que el servidor esté funcionando.
 Respuesta:
-```js
+```json
 {
   "status": "ok",
   "message": "Servidor activo"
@@ -112,7 +117,7 @@ Respuesta:
 Obtiene la lista de eventos.
 Actualmente devuelve una lista vacía.
 Respuesta:
-```js
+```json
 {
   "status": "success",
   "payload": []
@@ -123,12 +128,13 @@ Respuesta:
 Permite registrar un nuevo usuario en la plataforma.
 
 
+
 ## Registro de usuarios
 Para probar el registro se debe realizar una petición POST a:
 http://localhost:8080/api/sessions/register
 
 El body debe enviarse en formato JSON con los siguientes campos:
-```js
+```json
 {
   "first_name": "Ana",
   "last_name": "Perez",
@@ -155,9 +161,10 @@ El sistema realiza las siguientes validaciones:
 - La contraseña no se devuelve en la respuesta.
 
 
+
 ## Registro exitoso
 Ejemplo de respuesta:
-```js
+```json
 {
   "status": "success",
   "payload": {
@@ -173,10 +180,11 @@ Código HTTP:
 201 Created
 
 
+
 ## Posibles errores
 
 ### Campos faltantes
-```js
+```json
 {
   "status": "error",
   "message": "Faltan campos obligatorios"
@@ -186,7 +194,7 @@ Código HTTP:
 400 Bad Request
 
 ### Email inválido
-```js
+```json
 {
   "status": "error",
   "message": "Email inválido"
@@ -196,7 +204,7 @@ Código HTTP:
 400 Bad Request
 
 ### Contraseña demasiado corta
-```js
+```json
 {
   "status": "error",
   "message": "La contraseña debe tener al menos 8 caracteres"
@@ -206,7 +214,7 @@ Código HTTP:
 400 Bad Request
 
 ### Email ya registrado
-```js
+```json
 {
   "status": "error",
   "message": "El email ya está registrado"
@@ -216,6 +224,7 @@ Código HTTP:
 409 Conflict
 
 
+
 ## Seguridad
 Las contraseñas no se almacenan en texto plano.
 Antes de guardar un usuario en MongoDB, la contraseña se hashea utilizando bcrypt mediante un helper reutilizable ubicado en:
@@ -223,3 +232,134 @@ src/utils/hash.js
 La respuesta del endpoint de registro nunca incluye el campo password, ni en texto plano ni hasheado.
 
 ![alt text](image.png)
+
+
+
+## Rutas disponibles
+
+### GET /api/health
+Verifica que el servidor esté funcionando.
+
+- Respuesta:
+```json
+{
+  "status": "ok",
+  "message": "Servidor activo"
+}
+```
+
+### GET /api/events
+Obtiene la lista de eventos.
+
+``` json
+{
+  "status": "success",
+  "payload": []
+}
+```
+
+### POST /api/sessions/register
+Registra un nuevo usuario.
+
+- Request:
+```json
+{
+  "first_name": "Ana",
+  "last_name": "Perez",
+  "email": "Ana@Mail.com ",
+  "password": "Secreta123"
+}
+```
+
+- Respuesta exitosa:
+```json
+{
+  "status": "success",
+  "payload": {
+    "id": "665f2a...",
+    "first_name": "Ana",
+    "last_name": "Perez",
+    "email": "ana@mail.com",
+    "role": "user"
+  }
+}
+```
+
+- Errores posibles:
+```json
+{
+  "status": "error",
+  "message": "Faltan campos obligatorios"
+}
+{
+  "status": "error",
+  "message": "Email inválido"
+}
+{
+  "status": "error",
+  "message": "El email ya está registrado"
+}
+```
+
+### POST /api/sessions/login
+Inicia sesión con email y contraseña.
+
+- Request:
+```json
+{
+  "email": "ana@mail.com",
+  "password": "Secreta123"
+}
+```
+
+- Respuesta exitosa:
+```json
+{
+  "status": "success",
+  "message": "Login correcto"
+}
+```
+Además, el servidor guarda el JWT en una cookie HTTP Only llamada currentUser.
+
+- Si las credenciales son incorrectas:
+```json
+{
+  "status": "error",
+  "message": "Credenciales inválidas"
+}
+```
+
+### GET /api/sessions/current
+Devuelve los datos del usuario autenticado.
+Requiere la cookie currentUser.
+
+- Respuesta exitosa:
+```json
+{
+  "status": "success",
+  "payload": {
+    "id": "665f2a...",
+    "email": "ana@mail.com",
+    "role": "user"
+  }
+}
+```
+
+- Si no hay una sesión válida:
+```json
+{
+  "status": "error",
+  "message": "No autenticado"
+}
+```
+
+### POST /api/sessions/logout
+Cierra la sesión y elimina la cookie currentUser.
+
+Respuesta:
+```json
+{
+  "status": "success",
+  "message": "Sesión cerrada"
+}
+```
