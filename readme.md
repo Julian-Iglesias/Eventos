@@ -221,3 +221,5 @@ Las contraseñas no se almacenan en texto plano.
 Antes de guardar un usuario en MongoDB, la contraseña se hashea utilizando bcrypt mediante un helper reutilizable ubicado en:
 src/utils/hash.js
 La respuesta del endpoint de registro nunca incluye el campo password, ni en texto plano ni hasheado.
+
+![alt text](image.png)
