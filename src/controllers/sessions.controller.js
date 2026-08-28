@@ -1,73 +1,28 @@
-import {registerUser,loginUser} from '../services/sessions.service.js'
+import { generateToken } from "../utils/jwt.js";
 
 export const register=async(req,res)=>{
-    try{
-        const{first_name,last_name, email, password}=req.body
-        
-        if (!first_name|| !last_name||!email||!password){
-            return res.status(400).json({
-                status:'error',
-                message: 'Faltan campos obligatorios'
-        })
-    }
-        const emailRegex= /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-        if (!emailRegex.test(email.trim())){
-            return res.status(400).json({
-                status:'error',
-                message: 'Email inválido'
-            })
+    const user = req.user
+    return res.status(201).json({
+        status: 'success', payload:{
+            id:user._id,
+            first_name:user.first_name,
+            last_name:user.last_name,
+            email:user.email,
+            role:user.role,
         }
-
-        if(password.length<8){
-            return res.status(400).json({
-                status:'error',
-                message:'La contraseña debe tener al menos 8 caracteres'
-            })
-        }
-
-        const user = await registerUser({
-            first_name, last_name, email, password
-        })
-
-        return res.status(201).json({
-            status: 'success',
-            payload:user
-        })
-    } catch(error){
-        return res.status(error.statusCode || 500).json({
-            status: 'error',
-            message: error.message || 'Error interno del servidor'
-        })
-    }
+    })
 }
 
 export const login = async (req,res)=>{
-    try{
-        const{email,password}= req.body
-        if(!email||!password){
-            return res.status(400).json({
-                status:'error',
-                message:'Faltan campos obligatorios'
-            })
-        }
-        const token= await loginUser(email,password)
-        res.cookie('currentUser',token,{
-            httpOnly: true,
-            sameSite:'lax',
-            maxAge: 3600000,
-            secure: process.env.node_env==='production'
-        })
-        return res.status(200).json({
-            status:'success',
-            message:'Login correcto'
-        })
-    } catch(error){
-        return res.status(error.statusCode ||500).json({
-            status:'error',
-            message:error.message||'Error interno del servidor'
-        })
-    }
+    const token=generateToken(req.user)
+    res.cookie('currentUser', token,{
+        httpOnly:true, sameSite:'lax',maxAge:3600000,
+        secure:process.env.node_env==='production'
+    })
+    return res.status(200).json({
+        status:'success',
+        message:'Login correcto'
+    })
 }
 
 export const current= async (req,res)=>{

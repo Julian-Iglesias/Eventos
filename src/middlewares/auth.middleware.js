@@ -1,3 +1,4 @@
+/*
 import { verifyToken } from "../utils/jwt.js";
 
 export const auth=(req,res,next)=>{
@@ -19,3 +20,5 @@ export const auth=(req,res,next)=>{
         })
     }
 }
+*/
+//Codigo no utilizable
