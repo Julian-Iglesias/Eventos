@@ -62,6 +62,8 @@ http://localhost:8080
 
 ## Estructura de carpetas
 src/
+```text
+src/
 ├── app.js
 ├── server.js
 ├── config/
@@ -83,28 +85,18 @@ src/
 │   ├── User.js
 │   └── Event.js
 ├── middlewares/
+│   └── .gitkeep
 └── utils/
     ├── hash.js
     └── jwt.js
-
+```
 
 
 ## Arquitectura
 El proyecto está organizado por capas:
 
 Ruta=
-
-Passport / Controller >
-
-Service >
-
-Repository >
-
-DAO >
-
-Modelo >
-
-MongoDB >
+Passport / Controller > Service > Repository > DAO > Modelo > MongoDB 
 
 
 
@@ -339,15 +331,7 @@ Código HTTP: 200 OK
 
 #### Flujo de autenticación
 El flujo esperado es:
-POST /register >
-
-POST /login >
-
-GET /current >
-
-POST /logout >
-
-GET /current > 401 Unauthorized
+POST /register > POST /login > GET /current > POST /logout > GET /current > 401 Unauthorized
 
 
 
