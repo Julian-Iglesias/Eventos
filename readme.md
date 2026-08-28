@@ -91,19 +91,20 @@ src/
 
 ## Arquitectura
 El proyecto está organizado por capas:
-Ruta
 
-Passport / Controller
-!
-Service
-!
-Repository
-!
-DAO
-!
-Modelo
-!
-MongoDB
+Ruta=
+
+Passport / Controller >
+
+Service >
+
+Repository >
+
+DAO >
+
+Modelo >
+
+MongoDB >
 
 
 
@@ -338,15 +339,15 @@ Código HTTP: 200 OK
 
 #### Flujo de autenticación
 El flujo esperado es:
-POST /register
-!
-POST /login
-!
-GET /current
-!
-POST /logout
-!
-GET /current → 401 Unauthorized
+POST /register >
+
+POST /login >
+
+GET /current >
+
+POST /logout >
+
+GET /current > 401 Unauthorized
 
 
 
