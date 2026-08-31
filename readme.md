@@ -64,6 +64,7 @@ http://localhost:8080
 src/
 ```text
 src/
+src/
 ├── app.js
 ├── server.js
 ├── config/
@@ -71,10 +72,12 @@ src/
 │   └── passport.config.js
 ├── routes/
 │   ├── events.router.js
-│   └── sessions.router.js
+│   ├── sessions.router.js
+│   └── users.router.js
 ├── controllers/
 │   ├── events.controller.js
-│   └── sessions.controller.js
+│   ├── sessions.controller.js
+│   └── users.controller.js
 ├── services/
 │   └── sessions.service.js
 ├── repositories/
@@ -85,7 +88,8 @@ src/
 │   ├── User.js
 │   └── Event.js
 ├── middlewares/
-│   └── .gitkeep
+│   ├── auth.middleware.js
+│   └── authorize.middleware.js
 └── utils/
     ├── hash.js
     └── jwt.js
@@ -95,8 +99,28 @@ src/
 ## Arquitectura
 El proyecto está organizado por capas:
 
-Ruta=
-Passport / Controller > Service > Repository > DAO > Modelo > MongoDB 
+Ruta > Middleware/Passport > Controller > Service > Repository > DAO > Modelo > MongoDB 
+
+
+
+
+## Modelo User
+El modelo de usuario contiene:
+- first_name
+- last_name
+- email
+- password
+- role
+
+Los roles permitidos son:
+- user
+- organizer
+- admin
+
+El rol por defecto es `user`.
+
+El registro público no permite crear usuarios con rol `organizer` o `admin` desde el body.
+
 
 
 
@@ -137,6 +161,7 @@ Si no existe una cookie válida o el JWT está vencido o manipulado, responde co
 
 
 
+
 ## JWT y cookies
 Después de un login exitoso, el controller genera un JWT.
 El token contiene:
@@ -159,6 +184,87 @@ Configuración de la cookie:
 - sameSite: "lax"
 - maxAge: 3600000
 - secure: true únicamente en producción
+
+
+
+
+## Roles y autorización
+El sistema utiliza autorización basada en roles para controlar qué acciones puede realizar cada usuario.
+
+Los roles disponibles son:
+- `user`
+- `organizer`
+- `admin`
+
+### Matriz de permisos
+```text
+| Acción | user | organizer | admin |
+|---|---|---|---|
+| Consultar eventos publicados | ✅ | ✅ | ✅ |
+| Crear eventos | ❌ | ✅ | ✅ |
+| Modificar/cancelar eventos propios | ❌ | ✅ | ✅ |
+| Modificar cualquier evento | ❌ | ❌ | ✅ |
+| Ver todos los usuarios | ❌ | ❌ | ✅ |
+```
+
+
+
+
+## Middlewares de autenticación y autorización
+
+### auth.middleware.js
+
+El middleware de autenticación se encuentra en: src/middlewares/auth.middleware.js
+
+Se encarga de:
+- Leer el JWT desde la cookie `currentUser`.
+- Verificar que el token sea válido.
+- Guardar los datos del usuario en `req.user`.
+- Responder `401 Unauthorized` si no existe una sesión válida.
+
+### authorize.middleware.js
+El middleware de autorización se encuentra en: src/middlewares/authorize.middleware.js
+
+Recibe como parámetro los roles permitidos para acceder a una ruta.
+Ejemplo:
+```js
+authorize("organizer", "admin")
+```
+
+Si el usuario está autenticado pero su rol no está permitido, responde con `403 Forbidden`.
+
+
+
+
+## Diferencia entre 401 y 403
+
+### 401 Unauthorized
+Se utiliza cuando el usuario no tiene una sesión válida.
+
+Puede ocurrir cuando:
+- No existe la cookie `currentUser`.
+- El JWT es inválido.
+- El JWT está vencido.
+
+Respuesta:
+```json
+{
+  "status": "error",
+  "message": "No autenticado"
+}
+```
+
+### 403 Forbidden
+Se utiliza cuando el usuario está autenticado, pero no tiene permisos suficientes para realizar una acción.
+
+Respuesta:
+```json
+{
+  "status": "error",
+  "message": "No tenés permisos para realizar esta acción"
+}
+```
+
 
 
 
@@ -329,9 +435,143 @@ Código HTTP: 200 OK
 
 
 
-#### Flujo de autenticación
-El flujo esperado es:
-POST /register > POST /login > GET /current > POST /logout > GET /current > 401 Unauthorized
+
+## Rutas protegidas por roles
+
+### POST /api/events
+Permite crear un nuevo evento.
+
+Roles permitidos:
+- organizer
+- admin
+
+Request:
+```json
+{
+  "title": "Congreso Tech 2026",
+  "description": "Evento de tecnología",
+  "date": "2026-12-10",
+  "location": "Buenos Aires",
+  "capacity": 200
+}
+```
+
+El campo organizer se asigna automáticamente utilizando el ID del usuario autenticado.
+
+Respuesta exitosa:
+```json
+{
+  "status": "success",
+  "payload": {
+    "id": "6690...",
+    "title": "Congreso Tech 2026",
+    "organizer": "665f2a..."
+  }
+}
+```
+
+Código HTTP: 201 Created
+
+Si un usuario con rol user intenta crear un evento:
+```json
+{
+  "status": "error",
+  "message": "No tenés permisos para realizar esta acción"
+}
+```
+
+Código HTTP: 403 Forbidden
+
+Si se intenta acceder sin una sesión válida:
+```json
+{
+  "status": "error",
+  "message": "No autenticado"
+}
+```
+
+Código HTTP: 401 Unauthorized
+
+
+
+
+## PATCH /api/events/:id
+Permite modificar un evento.
+
+Roles permitidos:
+- organizer
+- admin
+
+Un usuario con rol organizer solo puede modificar eventos creados por él.
+Un usuario con rol admin puede modificar cualquier evento.
+
+Request de ejemplo:
+```json
+{
+  "title": "Congreso actualizado"
+}
+```
+
+Si el organizer es propietario del evento: 200 OK
+
+Si un organizer intenta modificar un evento creado por otro usuario:
+```json
+{
+  "status": "error",
+  "message": "No tenés permisos para modificar este evento"
+}
+```
+Código HTTP: 403 Forbidden
+
+Si el evento no existe:
+```json
+{
+  "status": "error",
+  "message": "Evento no encontrado"
+}
+```
+Código HTTP: 404 Not Found
+
+Un admin puede modificar cualquier evento aunque no sea el propietario.
+
+
+
+
+## GET /api/users
+
+Ruta administrativa que permite consultar todos los usuarios registrados.
+
+Solo puede acceder un usuario con rol: admin
+
+
+Si un user o organizer intenta acceder:
+```json
+{
+  "status": "error",
+  "message": "No tenés permisos para realizar esta acción"
+}
+```
+
+Código HTTP: 403 Forbidden
+
+Si accede un admin: 200 OK
+
+La respuesta no incluye las contraseñas de los usuarios.
+
+
+
+
+## Propiedad de recursos
+
+Cada evento guarda el ID del usuario que lo creó en el campo: organizer
+
+Al intentar modificar un evento se verifica:
+- organizer dueño > puede modificar
+- organizer ajeno > 403 Forbidden
+- admin > puede modificar cualquier evento
+
+De esta manera, la autorización se controla tanto por rol como por propiedad del recurso.
+
 
 
 
@@ -343,6 +583,7 @@ La contraseña no se incluye:
 - en las respuestas de la API;
 - en el payload del JWT;
 - en la información devuelta por /current.
+- en la respuesta de /api/users.
 ![alt text](image.png)
 
 
@@ -360,8 +601,10 @@ manteniendo centralizada la configuración de autenticación.
 
 
 
+
 ## Pruebas realizadas
 Se comprobaron los siguientes casos:
+
 - Registro exitoso.
 - Registro con campos faltantes.
 - Registro con email duplicado.
@@ -375,3 +618,11 @@ Se comprobaron los siguientes casos:
 - /current devuelve 401 después del logout.
 - Contraseña almacenada hasheada en MongoDB.
 - Password no incluido en respuestas ni JWT.
+- Ruta privada sin cookie > 401.
+- POST /api/events con rol user > 403.
+- POST /api/events con rol organizer > 201.
+- organizer modificando su propio evento > 200.
+- organizer intentando modificar un evento ajeno > 403.
+- Ruta administrativa con organizer > 403.
+- Ruta administrativa con admin > 200.
+- admin modificando un evento ajeno > 200.
