@@ -1,6 +1,8 @@
 import {Router} from 'express'
 import {register,login,current,logout } from '../controllers/sessions.controller.js'
 import passport from 'passport'
+import { HTTP_STATUS } from "../constants/httpStatus.js"
+
 
 const router = Router()
 
@@ -13,7 +15,7 @@ router.post(
       }
 
       if (!user) {
-        return res.status(info?.statusCode || 400).json({
+        return res.status(info?.statusCode || HTTP_STATUS.BAD_REQUEST).json({
           status: "error",
           message: info?.message || "Error en el registro"
         });
@@ -32,7 +34,7 @@ router.post('/login',
                 return next(error)
             }
             if (!user) {
-              return res.status(401).json({
+              return res.status(HTTP_STATUS.UNAUTHORIZED).json({
                 status: "error",
                 message: "Credenciales inválidas"
               });
@@ -53,7 +55,7 @@ router.get('/current',
           return next(error)
         }
         if(!user){
-          return res.status(401).json({
+          return res.status(HTTP_STATUS.UNAUTHORIZED).json({
             status:'error',
             message: 'No autenticado'
           })

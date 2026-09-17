@@ -1,6 +1,8 @@
 import { createEventRepository,getEventByIdRepository,updateEventRepository } from "../repositories/events.repository.js";
 import { getEventsRepository } from "../repositories/events.repository.js";
 import mongoose from "mongoose";
+import { HTTP_STATUS } from "../constants/httpStatus.js"
+
 
 export const createEventService =async(eventData,user)=>{
     const{
@@ -10,7 +12,7 @@ export const createEventService =async(eventData,user)=>{
 
 if(!title||!description||!category||!date||!location||capacity===undefined||price===undefined){
     const error =new Error('Faltan campos obligatorios')
-    error.statusCode=400
+    error.statusCode=HTTP_STATUS.BAD_REQUEST
     throw error
 }
 
@@ -18,24 +20,24 @@ const eventDate=new Date(date)
 
 if (Number.isNaN(eventDate.getTime())){
     const error=new Error('La fecha del evento debe ser futura')
-    error.statusCode=400
+    error.statusCode=HTTP_STATUS.BAD_REQUEST
     throw error
 }
 if (eventDate<=new Date()){
     const error=new Error('La fecha del evento debe ser futura')
-    error.statusCode=400
+    error.statusCode=HTTP_STATUS.BAD_REQUEST
     throw error
 }
 
 if(capacity<=0){
     const error=new Error('La capacidad debe ser mayor a 0')
-    error.statusCode=400
+    error.statusCode=HTTP_STATUS.BAD_REQUEST
     throw error
 }
 
 if(price<0){
     const error=new Error('El precio no puede ser negativo')
-    error.statusCode=400
+    error.statusCode=HTTP_STATUS.BAD_REQUEST
     throw error
 }
 
@@ -56,7 +58,7 @@ export const updateEventService =async(id,data,user)=>{
 
 if(!event){
     const error =new Error('Evento no encontrado')
-    error.statusCode=404
+    error.statusCode=HTTP_STATUS.NOT_FOUND
     throw error
 }
 
@@ -65,24 +67,24 @@ const isAdmin=user.role==='admin'
 
 if (!isOwner && !isAdmin){
     const error=new Error('No tenes permisos para modificar este evento')
-    error.statusCode=403
+    error.statusCode=HTTP_STATUS.FORBIDDEN
     throw error
 }
 if (event.status==='cancelled'){
     const error=new Error('No se puede modificar un evento cancelado')
-    error.statusCode=400
+    error.statusCode=HTTP_STATUS.BAD_REQUEST
     throw error
 }
 
 if(data.capacity!==undefined&& data.capacity<=0){
     const error=new Error('La capacidad debe ser mayor a 0')
-    error.statusCode=400
+    error.statusCode=HTTP_STATUS.BAD_REQUEST
     throw error
 }
 
 if(data.price!== undefined && data.capacity<=0){
     const error=new Error('El precio no puede ser negativo')
-    error.statusCode=400
+    error.statusCode=HTTP_STATUS.BAD_REQUEST
     throw error
 }
 
@@ -90,12 +92,12 @@ if(data.date!== undefined){
     const eventDate=new Date(data.date)
         if (Number.isNaN(eventDate.getTime())){
         const error=new Error('Fecha invalida')
-        error.statusCode=400
+        error.statusCode=HTTP_STATUS.BAD_REQUEST
         throw error
     }
         if (eventDate<=new Date()){
             const error=new Error('La fecha del evento debe ser futura')
-            error.statusCode=400
+            error.statusCode=HTTP_STATUS.BAD_REQUEST
             throw error
     }
     data.date=eventDate
@@ -111,7 +113,7 @@ export const updateEventStatusService =async (id,status,user)=>{
     const event =await getEventByIdRepository(id)
     if(!event){
     const error =new Error('Evento no encontrado')
-    error.statusCode=404
+    error.statusCode=HTTP_STATUS.NOT_FOUND
     throw error
 }
 const isOwner=event.organizer.toString()===user.id
@@ -119,7 +121,7 @@ const isAdmin=user.role==='admin'
 
 if (!isOwner && !isAdmin){
     const error=new Error('No tenes permisos para modificar este evento')
-    error.statusCode=403
+    error.statusCode=HTTP_STATUS.FORBIDDEN
     throw error
 }
 
@@ -129,19 +131,19 @@ const validStatuses=[
 
 if(!validStatuses.includes(status)){
     const error = new Error ('Estado invalido')
-    error.statusCode=400
+    error.statusCode=HTTP_STATUS.BAD_REQUEST
     throw error
 }
 
 if(event.status==='cancelled'){
     const error = new Error ('No se puede cambiar el estado de un evento cancelado')
-    error.statusCode=400
+    error.statusCode=HTTP_STATUS.BAD_REQUEST
     throw error
 }
 
 if(status==='published'&&(event.status==='finished'||event.status==='cancelled')){
     const error = new Error ('No se puede publicar un evento finalizado o cancelado')
-    error.statusCode=400
+    error.statusCode=HTTP_STATUS.BAD_REQUEST
     throw error
 }
 return await updateEventRepository(id,{status})
@@ -164,7 +166,7 @@ export const getEventsService=async (query) => {
             const fromDate=new Date(dateFrom)
             if(Number.isNaN(fromDate.getTime())){
                 const error =new Error('adteFrom invalido')
-                error.statusCode=400
+                error.statusCode=HTTP_STATUS.BAD_REQUEST
                 throw error
             }
             filter.date.$gte=fromDate
@@ -173,7 +175,7 @@ export const getEventsService=async (query) => {
             const toDate=new Date(dateTo)
             if(Number.isNaN(toDate.getTime())){
                 const error =new Error('dateTo invalido')
-                error.statusCode=400
+                error.statusCode=HTTP_STATUS.BAD_REQUEST
                 throw error
             }
             filter.date.$lte=toDate
@@ -185,14 +187,14 @@ export const getEventsService=async (query) => {
         !Number.isInteger(pageNumber)|| pageNumber<=0||!Number.isInteger(limitNumber)|| limitNumber<=0
     ){
         const error = new Error('page y limit deven ser numeros mayores a 0')
-        error.statusCode=400
+        error.statusCode=HTTP_STATUS.BAD_REQUEST
         throw error
     }
     
     const allowedSorts=['date','-date','price','-price','tilte','-title']
     if (!allowedSorts.includes(sort)){
         const error = new Error('Ordenamiento invalido')
-        error.statusCode=400
+        error.statusCode=HTTP_STATUS.BAD_REQUEST
         throw error
     }
     const skip = (pageNumber-1)*limitNumber
@@ -210,7 +212,7 @@ export const getEventByIdService = async (id) => {
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const error = new Error("ID de evento inválido");
-    error.statusCode = 400;
+    error.statusCode = HTTP_STATUS.BAD_REQUEST;
     throw error;
   }
 
@@ -218,7 +220,7 @@ export const getEventByIdService = async (id) => {
 
   if (!event) {
     const error = new Error("Evento no encontrado");
-    error.statusCode = 404;
+    error.statusCode = HTTP_STATUS.NOT_FOUND;
     throw error;
   }
 

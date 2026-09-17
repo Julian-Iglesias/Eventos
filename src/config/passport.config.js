@@ -4,6 +4,7 @@ import { getUserByEmail, saveUser } from "../repositories/users.repository.js";
 import { createHash, isValidPassword } from "../utils/hash.js";
 import {Strategy as CustomStrategy} from "passport-custom";
 import {verifyToken} from "../utils/jwt.js";
+import {HTTP_STATUS} from "../constants/httpStatus.js";
 
 
 passport.use(
@@ -39,7 +40,7 @@ passport.use(
         if (existingUser) {
           return done(null, false, {
             message: "El email ya está registrado",
-            statusCode: 409,
+            statusCode: HTTP_STATUS.CONFLICT,
           });
         }
         const hashedPassword = await createHash(password);

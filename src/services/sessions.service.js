@@ -1,3 +1,4 @@
+import { HTTP_STATUS } from '../constants/httpStatus.js'
 import {getUserByEmail, saveUser} from '../repositories/users.repository.js'
 import { createHash, isValidPassword } from '../utils/hash.js'
 import { generateToken } from '../utils/jwt.js'
@@ -9,7 +10,7 @@ export const registerUser= async (userData) =>{
     
     if (existingUser){
         const error = new Error('El email ya esta registrado')
-        error.statusCode = 409
+        error.statusCode = HTTP_STATUS.CONFLICT
         throw error
     }
     const hashedPassword = await createHash(password)
@@ -30,15 +31,15 @@ export const loginUser= async(email,password)=>{
     const user=await getUserByEmail(normalizedEmail)
 
     if(!user){
-        const error = new Error('Credencialess inválidas')
-        error.statusCode= 401
+        const error = new Error('Credenciales inválidas')
+        error.statusCode= HTTP_STATUS.UNAUTHORIZED
         throw error
     }
     const validPassword= await isValidPassword(password, user.password)
 
     if(!validPassword){
         const error = new Error('Credenciales inválidas')
-        error.statusCode=401
+        error.statusCode=HTTP_STATUS.UNAUTHORIZED
         throw error
     }
     const token= generateToken(user)

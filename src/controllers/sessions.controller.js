@@ -1,8 +1,10 @@
 import { generateToken } from "../utils/jwt.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js"
+
 
 export const register=async(req,res)=>{
     const user = req.user
-    return res.status(201).json({
+    return res.status(HTTP_STATUS.CREATED).json({
         status: 'success', payload:{
             id:user._id,
             first_name:user.first_name,
@@ -19,14 +21,14 @@ export const login = async (req,res)=>{
         httpOnly:true, sameSite:'lax',maxAge:3600000,
         secure:process.env.node_env==='production'
     })
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
         status:'success',
         message:'Login correcto'
     })
 }
 
 export const current= async (req,res)=>{
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
         status:'success',
         payload:{
             id:req.user.id,
@@ -42,7 +44,7 @@ export const logout=async(req,res)=>{
         sameSite:'lax',
         secure: process.env.node_env==='production'
     })
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
         status:'success',
         message:'Sesión cerrada'
     })

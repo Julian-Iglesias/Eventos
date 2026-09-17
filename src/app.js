@@ -4,6 +4,7 @@ import sessionsRouter from './routes/sessions.router.js'
 import cookieParser from 'cookie-parser'
 import passport from './config/passport.config.js'
 import usersRouter from './routes/users.router.js'
+import { HTTP_STATUS } from './constants/httpStatus.js'
 
 const app=express()
 app.use(express.json())
@@ -14,25 +15,23 @@ app.use('/api/sessions',sessionsRouter)
 app.use('/api/users', usersRouter)
 
 app.get('/api/health', (req,res)=>{
-    res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
         status:'ok',
         message: 'Servidor activo'
     })
 })
 
-app.use((err,req,res,next)=>{
-    console.error(err)
-    if (err && err.status===401 && err.message){
-        const statusCode= err.message=== 'El email ya está registrado'?409:400
-        return res.status(statusCode).json({
-            status:'error',
-            message:err.message
-        })
-    }
-    return res.status(500).json({
-        status:'error',
-        message:'Error interno del servidor'
-    })
-})
+app.use((err, req, res, next) => {
+  console.error(err);
+
+  const statusCode =
+    err.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR;
+
+  return res.status(statusCode).json({
+    status: "error",
+    message:
+      err.message || "Error interno del servidor"
+  });
+});
 
 export default app
