@@ -1,8 +1,10 @@
 import{Router} from 'express'
-import { createTicket } from '../controllers/tickets.controller.js'
+import { cancelTicket,getMyTickets } from '../controllers/tickets.controller.js'
 import{auth}from '../middlewares/auth.middleware.js'
 
 const router=Router()
-router.post('/event/:eid/tickets',auth,createTicket)
+
+router.get('/my-tickets',auth,getMyTickets)
+router.patch('/:tid/cancel',auth,cancelTicket)
 
 export default router

@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser'
 import passport from './config/passport.config.js'
 import usersRouter from './routes/users.router.js'
 import { HTTP_STATUS } from './constants/httpStatus.js'
+import ticketsRouter from "./routes/tickets.router.js";
 
 const app=express()
 app.use(express.json())
@@ -13,6 +14,7 @@ app.use(passport.initialize())
 app.use('/api/events', eventsRouter)
 app.use('/api/sessions',sessionsRouter)
 app.use('/api/users', usersRouter)
+app.use("/api/tickets", ticketsRouter);
 
 app.get('/api/health', (req,res)=>{
     return res.status(HTTP_STATUS.OK).json({
