@@ -12,6 +12,7 @@ API REST desarrollada con Node.js, Express y MongoDB para gestionar usuarios, au
 - bcrypt
 - cookie-parser
 - dotenv
+- Nodemailer
 
 ## Instalación
 
@@ -24,11 +25,20 @@ npm install
 
 # Crear un archivo .env en la raíz del proyecto tomando como referencia .env.example.
 ```json
-PORT=8080
-NODE_ENV=development
-MONGO_URL=
-JWT_SECRET=
-JWT_EXPIRES_IN=1h
+port=8080
+
+node_env=development
+
+mongo_url=
+
+jwt_secret=
+jwt_expires_in=1h
+
+mail_host=smtp.gmail.com
+mail_port=587
+mail_user=
+mail_pass=
+mail_from=
 ```
 
 
@@ -113,6 +123,50 @@ El modelo Event incluye:
 - finished
 
 organizer es una referencia al usuario que creó el evento.
+
+
+
+
+# Tickets e inscripciones
+
+
+## Estados de ticket
+- confirmed
+- pending
+- cancelled
+Los tickets cancelados permanecen almacenados pero dejan de ocupar cupo.
+
+
+### Rutas de tickets
+| Método | Ruta | Acceso |
+|---|---|---|
+| POST | `/api/events/:eid/tickets` | Autenticado |
+| GET | `/api/tickets/my-tickets` | Autenticado |
+| GET | `/api/events/:eid/tickets` | Organizer dueño o admin |
+| PATCH | `/api/tickets/:tid/cancel` | Dueño del ticket o admin |
+
+
+#### Reglas de inscripción
+- El evento debe existir y estar en estado `published`.
+- `quantity` debe ser mayor a 0.
+- Debe haber cupos suficientes.
+- Los tickets `cancelled` no cuentan como cupos ocupados.
+- Un usuario no puede tener más de una inscripción activa para el mismo evento.
+- Al cancelar un ticket se cambia su estado a `cancelled` y se registra `cancelledAt`.
+- Los tickets no se eliminan físicamente.
+- Un organizer solo puede consultar tickets de sus propios eventos.
+- Un admin puede consultar tickets de cualquier evento.
+
+
+##### Notificaciones por email
+Al confirmar una inscripción se envía un email mediante Nodemailer.
+
+El correo incluye:
+- nombre del evento
+- cantidad de entradas
+- código de reserva
+
+Las credenciales SMTP se configuran mediante variables de entorno y no se almacenan en el código ni se suben al repositorio.
 
 
 
