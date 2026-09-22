@@ -72,6 +72,17 @@ Route
 
 
 
+## Arquitectura por capas
+
+- DAO: acceso directo a MongoDB mediante Mongoose.
+- Repository: encapsula operaciones de dominio sobre los DAO.
+- Service: contiene reglas de negocio.
+- Controller: maneja request/response.
+- DTO: controla los datos expuestos por la API y evita devolver información sensible.
+
+
+
+
 # Roles
 Los roles disponibles son:
 - user

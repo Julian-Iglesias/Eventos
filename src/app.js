@@ -24,15 +24,12 @@ app.get('/api/health', (req,res)=>{
 })
 
 app.use((err, req, res, next) => {
-  console.error(err);
-
   const statusCode =
     err.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR;
 
   return res.status(statusCode).json({
     status: "error",
-    message:
-      err.message || "Error interno del servidor"
+    message: err.message || "Error interno del servidor"
   });
 });
 
