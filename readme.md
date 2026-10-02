@@ -16,14 +16,13 @@ API REST desarrollada con Node.js, Express y MongoDB para gestionar usuarios, au
 
 ## Instalación
 
-```bash```
-
+```bash
 npm install
+```
 
 
 
-
-# Crear un archivo .env en la raíz del proyecto tomando como referencia .env.example.
+## Crear un archivo .env en la raíz del proyecto tomando como referencia .env.example.
 ```json
 port=8080
 
@@ -44,46 +43,59 @@ mail_from=
 
 
 
-# Ejecutar en desarrollo:
+## Comandos:
 ```bash
 npm run dev
+npm start
+npm test
 ```
 
 
 
 
-# Servidor por defecto:
+## Servidor por defecto:
 http://localhost:8080
 
 
 
 
-# Arquitectura
-El proyecto utiliza una arquitectura por capas:
-Route
-> Middleware / Passport
-> Controller
-> Service
-> Repository
-> DAO
-> Model
-> MongoDB
 
 
 
 
-## Arquitectura por capas
+## Arquitectura
+El proyecto utiliza las siguientes capas y módulos:
 
+- Routes: definición de endpoints.
+- Middlewares / Passport: autenticación y autorización.
+- Controllers: manejo de request y response.
+- Services: reglas de negocio.
+- Repositories: operaciones de dominio.
 - DAO: acceso directo a MongoDB mediante Mongoose.
-- Repository: encapsula operaciones de dominio sobre los DAO.
-- Service: contiene reglas de negocio.
-- Controller: maneja request/response.
-- DTO: controla los datos expuestos por la API y evita devolver información sensible.
+- DTO: control de los datos expuestos por la API.
+- Models: esquemas de Mongoose.
+- Utils: funciones auxiliares.
+- Config: configuración de base de datos y Passport.
 
 
 
 
-# Roles
+## Manejo de errores
+La API utiliza un middleware centralizado para manejar errores.
+
+Los códigos utilizados son:
+
+- 400: datos inválidos.
+- 401: usuario no autenticado.
+- 403: usuario sin permisos.
+- 404: recurso no encontrado.
+- 409: conflicto de negocio.
+- 500: error interno del servidor.
+
+
+
+
+## Roles
 Los roles disponibles son:
 - user
 - organizer
@@ -91,12 +103,28 @@ Los roles disponibles son:
 
 El rol por defecto es user.
 
-El registro público no permite asignar manualmente roles organizer o admin.
+Los roles organizer y admin deben asignarse de forma administrativa y no pueden enviarse desde el registro público.
+
+
+### Usuarios de prueba
+Los usuarios pueden crearse mediante:
+
+POST /api/sessions/register
+
+Ejemplo:
+```json
+{
+  "first_name": "Juan",
+  "last_name": "Perez",
+  "email": "juan@mail.com",
+  "password": "Secreta123"
+}
+```
 
 
 
 
-# Autenticación
+## Autenticación
 La autenticación se realiza con Passport.js y JWT.
 
 El JWT se almacena en una cookie HTTP Only llamada: currentUser
@@ -104,7 +132,7 @@ El JWT se almacena en una cookie HTTP Only llamada: currentUser
 
 
 
-# Rutas principales:
+## Rutas principales:
 | Método | Ruta | Acceso |
 |---|---|---|
 | POST | `/api/sessions/register` | Público |
@@ -115,7 +143,7 @@ El JWT se almacena en una cookie HTTP Only llamada: currentUser
 
 
 
-# Eventos
+## Eventos
 El modelo Event incluye:
 - title
 - description
@@ -127,7 +155,7 @@ El modelo Event incluye:
 - status
 - organizer
 
-## Estados permitidos:
+### Estados permitidos:
 - draft
 - published
 - cancelled
@@ -138,17 +166,17 @@ organizer es una referencia al usuario que creó el evento.
 
 
 
-# Tickets e inscripciones
+## Tickets e inscripciones
 
 
-## Estados de ticket
+### Estados de ticket
 - confirmed
 - pending
 - cancelled
 Los tickets cancelados permanecen almacenados pero dejan de ocupar cupo.
 
 
-### Rutas de tickets
+#### Rutas de tickets
 | Método | Ruta | Acceso |
 |---|---|---|
 | POST | `/api/events/:eid/tickets` | Autenticado |
@@ -157,7 +185,7 @@ Los tickets cancelados permanecen almacenados pero dejan de ocupar cupo.
 | PATCH | `/api/tickets/:tid/cancel` | Dueño del ticket o admin |
 
 
-#### Reglas de inscripción
+##### Reglas de inscripción
 - El evento debe existir y estar en estado `published`.
 - `quantity` debe ser mayor a 0.
 - Debe haber cupos suficientes.
@@ -167,9 +195,9 @@ Los tickets cancelados permanecen almacenados pero dejan de ocupar cupo.
 - Los tickets no se eliminan físicamente.
 - Un organizer solo puede consultar tickets de sus propios eventos.
 - Un admin puede consultar tickets de cualquier evento.
+- No se permite inscribirse a eventos cuya fecha ya haya finalizado.
 
-
-##### Notificaciones por email
+###### Notificaciones por email
 Al confirmar una inscripción se envía un email mediante Nodemailer.
 
 El correo incluye:
@@ -182,7 +210,7 @@ Las credenciales SMTP se configuran mediante variables de entorno y no se almace
 
 
 
-# Rutas de eventos
+## Rutas de eventos
 | Método | Ruta | Acceso |
 |---|---|---|
 | POST | `/api/events` | organizer, admin |
@@ -194,7 +222,7 @@ Las credenciales SMTP se configuran mediante variables de entorno y no se almace
 
 
 
-# Reglas de negocio
+## Reglas de negocio
 - No se pueden crear eventos con fecha pasada.
 - capacity debe ser mayor a 0.
 - price debe ser mayor o igual a 0.
@@ -209,7 +237,7 @@ Las credenciales SMTP se configuran mediante variables de entorno y no se almace
 
 
 
-# Filtros y paginación
+## Filtros y paginación
 GET /api/events acepta:
 - status
 - category
@@ -223,7 +251,7 @@ GET /api/events acepta:
 
 
 
-# Ejemplo:
+## Ejemplo:
 GET /api/events?status=published&category=workshop&page=1&limit=5&sort=date
 La respuesta incluye:
 {
@@ -237,7 +265,7 @@ La respuesta incluye:
 
 
 
-# Autorización
+## Autorización
 Los middlewares:
 src/middlewares/auth.middleware.js
 src/middlewares/authorize.middleware.js
@@ -249,7 +277,7 @@ controlan autenticación y roles.
 
 
 
-# Usuarios
+## Usuarios
 Ruta administrativa:
 GET /api/users
 Solo accesible por admin.
@@ -259,7 +287,21 @@ Las contraseñas no se devuelven en las respuestas.
 
 
 
-# Seguridad
+## Flujo de uso
+
+1. Registrar usuario con `POST /api/sessions/register`.
+2. Iniciar sesión con `POST /api/sessions/login`.
+3. Verificar sesión con `GET /api/sessions/current`.
+4. Un organizer crea un evento.
+5. El evento se publica.
+6. Un user se inscribe mediante `POST /api/events/:eid/tickets`.
+7. Se genera un código de reserva y se envía el email de confirmación.
+8. El usuario puede consultar sus tickets en `GET /api/tickets/my-tickets`.
+9. Puede cancelar su inscripción con `PATCH /api/tickets/:tid/cancel`.
+
+
+
+## Seguridad
 - Contraseñas hasheadas con bcrypt.
 - JWT firmado con JWT_SECRET.
 - JWT almacenado en cookie HTTP Only.

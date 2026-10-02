@@ -29,6 +29,12 @@ export const createTicketService= async(eventId,quantity,user)=>{
         throw error
     }
 
+    if (new Date(event.date) <= new Date()) {
+      const error = new Error("El evento ya finalizó");
+      error.statusCode = HTTP_STATUS.BAD_REQUEST;
+      throw error;
+    }
+
     if(!Number.isInteger(quantity)||quantity<=0){
         const error = new Error('La cantidad debe ser un numero mayor a 0')
         error.statusCode=HTTP_STATUS.BAD_REQUEST
@@ -56,12 +62,15 @@ export const createTicketService= async(eventId,quantity,user)=>{
 
     const ticket=await createTicketRepository({user:user.id,event:eventId,quantity,status:'confirmed', reservationCode})
     
-    await sendTicketConfirmation({to: user.email, eventTitle: event.title, reservationCode, quantity})
+    try {
+        await sendTicketConfirmation({to:user.email, eventTitle:event.title, reservationCode, quantity})
+        } catch (error) {
+        console.error("Error al enviar email de confirmación:",error.message)
+    }
 
-    return ticket
+    return ticket;
 
 
-    
 }
 
 
